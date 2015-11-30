@@ -14,7 +14,11 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
+             | Character Char
+             | Float Double
              deriving (Show, Eq, Ord)
+
+tryString = try . string             
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
@@ -44,6 +48,14 @@ escapedChars = do
                     't' -> '\t'
                     c -> c
 
+parseCharacter :: Parser LispVal
+parseCharacter = do
+                  tryString "#\\"
+                  c <- (tryString "newline" >> return '\n') <|> 
+                       (tryString "space" >> return ' ') <|>
+                       anyChar
+                  return $ Character c
+
 parseAtom :: Parser LispVal
 parseAtom = do 
               first <- letter <|> symbol
@@ -63,8 +75,6 @@ readBin = r 0
 oct2dig x = fst $ readOct x !! 0
 hex2dig x = fst $ readHex x !! 0
 
-tryString = try . string
-
 parseNumber :: Parser LispVal
 parseNumber =  (liftM (Number . read) $ many1 digit) <|>
                (liftM (Number . readBin) $ tryString "#b" >> many1 (oneOf "01")) <|>
@@ -80,15 +90,23 @@ parseNumber =  (liftM (Number . read) $ many1 digit) <|>
 
 --parseNumber = many1 digit >>= \s -> (return . Number . read) s
 
-
+-- applicative style :)
+parseFloat  :: Parser LispVal
+parseFloat = (\x _ y _ -> Float (fst.head$readFloat ("0"++x++"."++y))) 
+  <$> many digit
+  <*> char '.' 
+  <*> many digit
+  <*> optional (oneOf "sfdlSFDL")
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
-         <|> parseString
-         <|> parseNumber
+            <|> parseString
+            <|> try parseNumber -- we need the 'try' because 
+            <|> try parseCharacter -- these can all start with the hash char
+            <|> try parseFloat
 
---main :: IO ()
---main = do 
---         (expr:_) <- getArgs
---         putStrLn (readExpr expr)
+main :: IO ()
+main = do 
+         (expr:_) <- getArgs
+         putStrLn (readExpr expr)
 

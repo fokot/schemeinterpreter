@@ -11,7 +11,7 @@ import Data.Functor.Identity
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [parseNumerUnitTests]
+tests = testGroup "Tests" [parseNumerUnitTests, parseCharacterUnitTests, parseFloatUnitTests]
 
 fromRight (Right x) = x
 fromRight (Left _) = error "Can not parse it!!! This is not right!!!"
@@ -49,3 +49,66 @@ parseNumerUnitTests = testGroup "parseNumber Unit tests"
     testCase "does not parse bullshit" $
     parseNumber `notParses` "a"
   ]
+
+
+parseCharacterUnitTests = testGroup "parseCharacter Unit tests"
+  [ testCase "parses lower case letter" $
+    parseCharacter `parses` "#\\a" @?= Character 'a'
+    ,
+    testCase "parses upper case letter" $
+    parseCharacter `parses` "#\\A" @?= Character 'A'
+    ,
+    testCase "parses digit" $
+    parseCharacter `parses` "#\\1" @?= Character '1'
+    ,
+    testCase "parses left parenthesis" $
+    parseCharacter `parses` "#\\(" @?= Character '('
+    ,
+    testCase "parses the space character" $
+    parseCharacter `parses` "#\\ " @?= Character ' '
+    ,
+    testCase "parses the preferred way to write a space" $
+    parseCharacter `parses` "#\\space" @?= Character ' '
+    ,
+    testCase "parses the newline character" $
+    parseCharacter `parses` "#\\newline" @?= Character '\n'
+    ,
+    testCase "does not parse bullshit" $
+    parseCharacter `notParses` "a"
+    ,
+    testCase "does not parse bullshit" $
+    parseExpr `parses` "#\\bullshit" @?= Character '\n'
+  ]
+
+parseFloatUnitTests = testGroup "parseFloat Unit tests"
+  [ testCase "parses float number with dot" $
+    parseFloat `parses` "1.2" @?= Float 1.2
+    ,
+    testCase "parses float number with dot and short precision" $
+    parseFloat `parses` "1.2s" @?= Float 1.2
+    ,
+    testCase "parses float number with dot and short precision in upper case" $
+    parseFloat `parses` "1.2S" @?= Float 1.2
+    ,
+    testCase "parses float number with dot but without significand" $
+    parseFloat `parses` ".2" @?= Float 0.2
+    ,
+    testCase "parses float number with dot but without significand with single precision" $
+    parseFloat `parses` ".2s" @?= Float 0.2
+    ,
+    testCase "parses float number without fraction" $
+    parseFloat `parses` "2." @?= Float 2
+    ,
+    testCase "parses float number with dot and single precision" $
+    parseFloat `parses` "1.2f" @?= Float 1.2
+    ,
+    testCase "parses float number with dot and double precision" $
+    parseFloat `parses` "1.2d" @?= Float 1.2
+    ,
+    testCase "parses float number with dot and long precision" $
+    parseFloat `parses` "1.2l" @?= Float 1.2
+    ,
+    testCase "does not parse bullshit" $
+    parseFloat `notParses` "sss"
+  ]
+
