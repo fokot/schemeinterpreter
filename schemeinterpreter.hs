@@ -5,6 +5,8 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
 import Numeric
+import Data.Ratio
+import Data.Maybe
 
 
 
@@ -16,6 +18,8 @@ data LispVal = Atom String
              | Bool Bool
              | Character Char
              | Float Double
+             | Ratio Rational
+             | Complex Double Double
              deriving (Show, Eq, Ord)
 
 tryString = try . string             
@@ -90,13 +94,37 @@ parseNumber =  (liftM (Number . read) $ many1 digit) <|>
 
 --parseNumber = many1 digit >>= \s -> (return . Number . read) s
 
--- applicative style :)
-parseFloat  :: Parser LispVal
+-- applicative style bitches :)
+-- I'm really happy that I just learned it hwo to use it in real project
+parseFloat :: Parser LispVal
 parseFloat = (\x _ y _ -> Float (fst.head$readFloat ("0"++x++"."++y))) 
   <$> many digit
   <*> char '.' 
   <*> many digit
   <*> optional (oneOf "sfdlSFDL")
+
+parseRatio :: Parser LispVal
+parseRatio = (\x _ y -> Ratio (read x % read y)) 
+  <$> many1 digit
+  <*> char '/' 
+  <*> many1 digit
+
+toDouble :: LispVal -> Double
+toDouble (Float f) = realToFrac f
+toDouble (Number n) = fromIntegral n
+
+sign :: Char -> Double
+sign '+' = 1
+sign '-' = -1
+
+-- lets try monad style again
+parseComplex :: Parser LispVal
+parseComplex = do s1 <- optionMaybe $ char '-'
+                  r <- (try parseFloat <|> parseNumber)
+                  s2 <- oneOf "-+"
+                  i <- (try parseFloat <|> parseNumber)
+                  char 'i'
+                  return $ Complex (sign (fromMaybe '+' s1) * toDouble r) (sign s2 * toDouble i)
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
@@ -104,6 +132,7 @@ parseExpr = parseAtom
             <|> try parseNumber -- we need the 'try' because 
             <|> try parseCharacter -- these can all start with the hash char
             <|> try parseFloat
+            <|> try parseRatio
 
 main :: IO ()
 main = do 

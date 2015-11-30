@@ -7,11 +7,17 @@ import Schemeinterpreter hiding (main)
 import Text.ParserCombinators.Parsec (parse)
 import Text.Parsec.Prim
 import Data.Functor.Identity
+import Data.Ratio
 
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [parseNumerUnitTests, parseCharacterUnitTests, parseFloatUnitTests]
+tests = testGroup "Tests" [ parseNumerUnitTests,
+                            parseCharacterUnitTests,
+                            parseFloatUnitTests,
+                            parseRatioUnitTests,
+                            parseComplexUnitTests
+                          ]
 
 fromRight (Right x) = x
 fromRight (Left _) = error "Can not parse it!!! This is not right!!!"
@@ -110,5 +116,42 @@ parseFloatUnitTests = testGroup "parseFloat Unit tests"
     ,
     testCase "does not parse bullshit" $
     parseFloat `notParses` "sss"
+  ]
+
+parseRatioUnitTests = testGroup "parseRatio Unit tests"
+  [ testCase "parses ratio" $
+    parseRatio `parses` "1/2" @?= (Ratio $ 1 % 2)
+    ,
+    testCase "does not parse bullshit" $
+    parseRatio `notParses` "1/.3"
+    ,
+    testCase "does not parse bullshit" $
+    parseRatio `notParses` "sss"
+  ]
+
+parseComplexUnitTests = testGroup "parseComplex Unit tests"
+  [ testCase "parses comlex" $
+    parseComplex `parses` "1+2i" @?= Complex 1 2
+    ,
+    testCase "parses comlex with minus sign at real part" $
+    parseComplex `parses` "-1+2i" @?= Complex (-1) 2
+    ,
+    testCase "parses comlex with minus sign at imaginary part" $
+    parseComplex `parses` "1-2i" @?= Complex 1 (-2)
+    ,
+    testCase "parses comlex with real number at real part" $
+    parseComplex `parses` "1.5+2i" @?= Complex 1.5 2
+    ,
+    testCase "parses comlex with real number at imaginary part" $
+    parseComplex `parses` "1+2.3i" @?= Complex 1 2.3
+    ,
+    testCase "parses comlex with real numbers at both parts" $
+    parseComplex `parses` "1.1+2.1i" @?= Complex 1.1 2.1
+    ,
+    testCase "does not parse bullshit" $
+    parseComplex `notParses` "1+d"
+    ,
+    testCase "does not parse bullshit" $
+    parseComplex `notParses` "sss"
   ]
 
