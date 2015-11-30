@@ -16,7 +16,8 @@ tests = testGroup "Tests" [ parseNumerUnitTests,
                             parseCharacterUnitTests,
                             parseFloatUnitTests,
                             parseRatioUnitTests,
-                            parseComplexUnitTests
+                            parseComplexUnitTests,
+                            parseExprListAndDottedListsUnitTests
                           ]
 
 fromRight (Right x) = x
@@ -81,9 +82,6 @@ parseCharacterUnitTests = testGroup "parseCharacter Unit tests"
     ,
     testCase "does not parse bullshit" $
     parseCharacter `notParses` "a"
-    ,
-    testCase "does not parse bullshit" $
-    parseExpr `parses` "#\\bullshit" @?= Character '\n'
   ]
 
 parseFloatUnitTests = testGroup "parseFloat Unit tests"
@@ -155,3 +153,19 @@ parseComplexUnitTests = testGroup "parseComplex Unit tests"
     parseComplex `notParses` "sss"
   ]
 
+parseExprListAndDottedListsUnitTests = testGroup "parseExp list and dotted lists Unit tests"
+  [ testCase "parses list" $
+    parseExpr `parses` "(a test)" @?= List [Atom "a",Atom "test"]
+    ,
+    testCase "nested list" $
+    parseExpr `parses` "(a (nested) test)" @?= List [Atom "a",List [Atom "nested"],Atom "test"]
+    ,
+    testCase "dotted nested list" $
+    parseExpr `parses` "(a (dotted . list) test)" @?= List [Atom "a",List [Atom "dotted",Float 0.0,Atom "list"],Atom "test"]
+    ,
+    testCase "quoted dotted nested list" $
+    parseExpr `parses` "(a '(quoted (dotted . list)) test)" @?= List [Atom "a",List [Atom "quote",List [Atom "quoted",List [Atom "dotted",Float 0.0,Atom "list"]]],Atom "test"]
+    ,
+    testCase "does not parse imbalanced parens" $
+    parseExpr `notParses` "(a '(imbalanced parens)"
+  ]

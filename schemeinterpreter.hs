@@ -126,6 +126,30 @@ parseComplex = do s1 <- optionMaybe $ char '-'
                   char 'i'
                   return $ Complex (sign (fromMaybe '+' s1) * toDouble r) (sign s2 * toDouble i)
 
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+    head <- endBy parseExpr spaces
+    tail <- char '.' >> spaces >> parseExpr
+    return $ DottedList head tail
+
+parseQuoted :: Parser LispVal
+parseQuoted = do
+    char '\''
+    x <- parseExpr
+    return $ List [Atom "quote", x]
+
+
+--parseExpr :: Parser LispVal
+--parseExpr = parseAtom
+--            <|> parseString
+--            <|> try parseNumber -- we need the 'try' because 
+--            <|> try parseCharacter -- these can all start with the hash char
+--            <|> try parseFloat
+--            <|> try parseRatio
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
             <|> parseString
@@ -133,6 +157,11 @@ parseExpr = parseAtom
             <|> try parseCharacter -- these can all start with the hash char
             <|> try parseFloat
             <|> try parseRatio
+            <|> parseQuoted
+            <|> do char '('
+                   x <- try parseList <|> parseDottedList
+                   char ')'
+                   return x
 
 main :: IO ()
 main = do 
