@@ -1,7 +1,7 @@
 module Schemeinterpreter
 where
 
-import Text.ParserCombinators.Parsec hiding (spaces)
+import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad
 import Numeric
@@ -35,8 +35,8 @@ readExpr input = case parse parseExpr "lisp" input of
     Left err -> "No match: " ++ show err
     Right _ -> "Found value"
 
-spaces :: Parser ()
-spaces = skipMany1 space
+spaces1 :: Parser ()
+spaces1 = skipMany1 space
 
 parseString :: Parser LispVal
 parseString = do
@@ -132,8 +132,8 @@ parseComplex = do s1 <- optionMaybe $ char '-'
 parseAnyList :: Parser LispVal
 parseAnyList = do
     char '('
-    head <- sepEndBy parseExpr spaces
-    dottedTail <- optionMaybe (char '.' >> spaces >> parseExpr)
+    head <- sepEndBy parseExpr spaces1
+    dottedTail <- optionMaybe (char '.' >> spaces1 >> parseExpr)
     char ')'
     return $ case dottedTail of
                   Nothing -> List head
@@ -163,7 +163,7 @@ arrayFromList x = listArray (0, length x - 1) x
 parseVector :: Parser LispVal
 parseVector = do
     string "#("
-    v <- sepBy parseExpr spaces
+    v <- sepBy parseExpr spaces1
     char ')'
     return $ Vector $ arrayFromList v
 
