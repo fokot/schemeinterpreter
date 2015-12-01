@@ -7,6 +7,7 @@ import Control.Monad
 import Numeric
 import Data.Ratio
 import Data.Maybe
+import Data.Array
 
 
 
@@ -20,8 +21,10 @@ data LispVal = Atom String
              | Float Double
              | Ratio Rational
              | Complex Double Double
+             | Vector (Array Int LispVal)
              deriving (Show, Eq, Ord)
 
+tryString :: String -> GenParser Char st String
 tryString = try . string             
 
 symbol :: Parser Char
@@ -100,7 +103,7 @@ parseFloat :: Parser LispVal
 parseFloat = (\x _ y _ -> Float (fst.head$readFloat ("0"++x++"."++y))) 
   <$> many digit
   <*> char '.' 
-  <*> many digit
+  <*> many1 digit
   <*> optional (oneOf "sfdlSFDL")
 
 parseRatio :: Parser LispVal
@@ -126,14 +129,15 @@ parseComplex = do s1 <- optionMaybe $ char '-'
                   char 'i'
                   return $ Complex (sign (fromMaybe '+' s1) * toDouble r) (sign s2 * toDouble i)
 
-parseList :: Parser LispVal
-parseList = liftM List $ sepBy parseExpr spaces
-
-parseDottedList :: Parser LispVal
-parseDottedList = do
-    head <- endBy parseExpr spaces
-    tail <- char '.' >> spaces >> parseExpr
-    return $ DottedList head tail
+parseAnyList :: Parser LispVal
+parseAnyList = do
+    char '('
+    head <- sepEndBy parseExpr spaces
+    dottedTail <- optionMaybe (char '.' >> spaces >> parseExpr)
+    char ')'
+    return $ case dottedTail of
+                  Nothing -> List head
+                  Just tail -> DottedList head tail
 
 parseQuoted :: Parser LispVal
 parseQuoted = do
@@ -141,27 +145,40 @@ parseQuoted = do
     x <- parseExpr
     return $ List [Atom "quote", x]
 
+parseQuasiquoted :: Parser LispVal
+parseQuasiquoted = do
+    char '`'
+    x <- parseExpr
+    return $ List [Atom "quasiquote", x]
 
---parseExpr :: Parser LispVal
---parseExpr = parseAtom
---            <|> parseString
---            <|> try parseNumber -- we need the 'try' because 
---            <|> try parseCharacter -- these can all start with the hash char
---            <|> try parseFloat
---            <|> try parseRatio
+parseUnquoted :: Parser LispVal
+parseUnquoted = do
+    char ','
+    x <- parseExpr
+    return $ List [Atom "unquote", x]    
+
+arrayFromList :: [a] -> Array Int a
+arrayFromList x = listArray (0, length x - 1) x
+
+parseVector :: Parser LispVal
+parseVector = do
+    string "#("
+    v <- sepBy parseExpr spaces
+    char ')'
+    return $ Vector $ arrayFromList v
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
-            <|> parseString
+parseExpr = parseString
             <|> try parseNumber -- we need the 'try' because 
             <|> try parseCharacter -- these can all start with the hash char
+            <|> try parseVector
             <|> try parseFloat
             <|> try parseRatio
             <|> parseQuoted
-            <|> do char '('
-                   x <- try parseList <|> parseDottedList
-                   char ')'
-                   return x
+            <|> parseQuasiquoted
+            <|> parseUnquoted
+            <|> parseAnyList
+            <|> parseAtom
 
 main :: IO ()
 main = do 

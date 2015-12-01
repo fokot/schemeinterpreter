@@ -8,6 +8,7 @@ import Text.ParserCombinators.Parsec (parse)
 import Text.Parsec.Prim
 import Data.Functor.Identity
 import Data.Ratio
+import Data.Array
 
 main = defaultMain tests
 
@@ -17,7 +18,9 @@ tests = testGroup "Tests" [ parseNumerUnitTests,
                             parseFloatUnitTests,
                             parseRatioUnitTests,
                             parseComplexUnitTests,
-                            parseExprListAndDottedListsUnitTests
+                            parseExprListAndDottedListsUnitTests,
+                            parseExprQuasiquotesUnitTests,
+                            parseExprVectorUnitTests
                           ]
 
 fromRight (Right x) = x
@@ -100,9 +103,6 @@ parseFloatUnitTests = testGroup "parseFloat Unit tests"
     testCase "parses float number with dot but without significand with single precision" $
     parseFloat `parses` ".2s" @?= Float 0.2
     ,
-    testCase "parses float number without fraction" $
-    parseFloat `parses` "2." @?= Float 2
-    ,
     testCase "parses float number with dot and single precision" $
     parseFloat `parses` "1.2f" @?= Float 1.2
     ,
@@ -160,12 +160,34 @@ parseExprListAndDottedListsUnitTests = testGroup "parseExp list and dotted lists
     testCase "nested list" $
     parseExpr `parses` "(a (nested) test)" @?= List [Atom "a",List [Atom "nested"],Atom "test"]
     ,
+    testCase "dotted list" $
+    parseExpr `parses` "(a b . c)" @?= DottedList [Atom "a", Atom "b"] (Atom "c")
+    ,
     testCase "dotted nested list" $
-    parseExpr `parses` "(a (dotted . list) test)" @?= List [Atom "a",List [Atom "dotted",Float 0.0,Atom "list"],Atom "test"]
+    parseExpr `parses` "(a (dotted . list) test)" @?= List [Atom "a",DottedList [Atom "dotted"] (Atom "list"),Atom "test"]
     ,
     testCase "quoted dotted nested list" $
-    parseExpr `parses` "(a '(quoted (dotted . list)) test)" @?= List [Atom "a",List [Atom "quote",List [Atom "quoted",List [Atom "dotted",Float 0.0,Atom "list"]]],Atom "test"]
+    parseExpr `parses` "(a '(quoted (dotted . list)) test)" @?= List [Atom "a",List [Atom "quote",List [Atom "quoted",DottedList [Atom "dotted"] (Atom "list")]],Atom "test"]
     ,
     testCase "does not parse imbalanced parens" $
     parseExpr `notParses` "(a '(imbalanced parens)"
+  ]
+
+parseExprQuasiquotesUnitTests = testGroup "parseExp quasiquotes Unit tests"
+  [ testCase "quasiquoted" $
+    parseExpr `parses` "`(foo bar baz)" @?= List [Atom "quasiquote", List [Atom "foo", Atom "bar", Atom "baz"]]
+    ,
+    testCase "quasiquoted and unquoted" $
+    parseExpr `parses` "`(foo ,bar baz)" @?= List [Atom "quasiquote", List [Atom "foo", List [Atom "unquote", Atom "bar"]  , Atom "baz"]]
+    ,
+    testCase "does not parse imbalanced parens" $
+    parseExpr `notParses` "`(a (imbalanced parens)"
+  ]
+
+parseExprVectorUnitTests = testGroup "parse vector Unit tests"
+  [ testCase "empty vector" $
+    parseExpr `parses` "#()" @?= Vector (array (0,-1) [])
+    ,
+    testCase "quasiquoted and unquoted" $
+    parseExpr `parses` "#(foo bar baz)" @?= Vector (array (0,2) [(0, Atom "foo"), (1, Atom "bar"), (2, Atom "baz")])
   ]
