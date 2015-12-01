@@ -1,6 +1,7 @@
-module Schemeinterpreter
+module Parser
 where
 
+import AST
 import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad
@@ -9,20 +10,6 @@ import Data.Ratio
 import Data.Maybe
 import Data.Array
 
-
-
-data LispVal = Atom String
-             | List [LispVal]
-             | DottedList [LispVal] LispVal
-             | Number Integer
-             | String String
-             | Bool Bool
-             | Character Char
-             | Float Double
-             | Ratio Rational
-             | Complex Double Double
-             | Vector (Array Int LispVal)
-             deriving (Show, Eq, Ord)
 
 tryString :: String -> GenParser Char st String
 tryString = try . string             

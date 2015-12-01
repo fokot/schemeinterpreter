@@ -1,9 +1,10 @@
-module Schemeinterpreter.Test
+module ParserTest
 where
 
 import Test.Tasty
 import Test.Tasty.HUnit
-import Schemeinterpreter hiding (main)
+import Parser hiding (main)
+import AST
 import Text.ParserCombinators.Parsec (parse)
 import Text.Parsec.Prim
 import Data.Functor.Identity
