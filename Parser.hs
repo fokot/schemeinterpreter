@@ -17,11 +17,6 @@ tryString = try . string
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 
-readExpr :: String -> String
-readExpr input = case parse parseExpr "lisp" input of
-    Left err -> "No match: " ++ show err
-    Right _ -> "Found value"
-
 spaces1 :: Parser ()
 spaces1 = skipMany1 space
 
@@ -167,8 +162,14 @@ parseExpr = parseString
             <|> parseAnyList
             <|> parseAtom
 
+readExpr :: String -> Either ParseError LispVal
+readExpr = parse parseExpr "lisp"
+
 main :: IO ()
 main = do 
-         (expr:_) <- getArgs
-         putStrLn (readExpr expr)
+        (expr:_) <- getArgs
+        putStrLn (case readExpr expr of 
+          Left err -> "No match: " ++ show err
+          Right val -> "Found value" ++ show val
+          )
 
