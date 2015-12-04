@@ -11,14 +11,17 @@ main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [ simpleNumericUnitTests,
-                            typeTestUnitTests
+                            typeTestUnitTests,
+                            functionsUnitTests
                           ]
 
 evaluatesTo :: String -> String -> Assertion
 expression `evaluatesTo` value = 
   case readExpr expression of
     Left err -> assertString $ "Can not parse:\n" ++ expression ++ "\n" ++ show err
-    Right parsed -> (show . eval) parsed @?= value
+    Right parsed -> case eval parsed of
+                    Left err -> assertString $ "Can not evaluate:\n" ++ expression ++ "\n" ++ show err
+                    Right evaluated -> show evaluated @?= value
 
 simpleNumericUnitTests = testGroup "simple numeric Unit tests"
   [ testCase "plus" $
@@ -120,4 +123,30 @@ typeTestUnitTests = testGroup "type test Unit tests"
     ,
     testCase "(vector? '(a b)) fails" $
     "(vector? '(a b))" `evaluatesTo` "#f"
+  ]
+
+functionsUnitTests = testGroup "functions Unit tests"
+  [ testCase "(eq? 5 (+ 1 3 1))" $
+    "(eq? 5 (+ 1 3 1))" `evaluatesTo` "#t"
+    ,
+    testCase "(eq? 5 (+ 1 3 1 2))" $
+    "(eq? 5 (+ 1 3 1 2))" `evaluatesTo` "#f"
+    ,
+    testCase "(eq? 5 (+ 1 3 1) (- 6 1))" $
+    "(eq? 5 (+ 1 3 1) (- 6 1))" `evaluatesTo` "#t"
+    ,
+    testCase "(eq? 5 (+ 1 3 1) (- 6 2))" $
+    "(eq? 5 (+ 1 3 1) (- 6 2))" `evaluatesTo` "#f"
+    ,
+    testCase "(> 2 3)" $
+    "(> 2 3)" `evaluatesTo` "#f"
+    ,
+    testCase "(< 2 3)" $
+    "(< 2 3)" `evaluatesTo` "#t"
+    ,
+    testCase "(if (> 2 3) \"yes\" \"no\")" $
+    "(if (> 2 3) \"yes\" \"no\")" `evaluatesTo` "\"no\""
+    ,
+    testCase "(if (> 2 3) \"no\" \"yes\")" $
+    "(if (< 2 3) \"yes\" \"no\")" `evaluatesTo` "\"yes\""
   ]
