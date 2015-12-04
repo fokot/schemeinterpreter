@@ -13,6 +13,7 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
+               deriving (Eq)
 
 showError :: LispError -> String
 showError (UnboundVar message varname)  = message ++ ": " ++ varname
@@ -23,6 +24,7 @@ showError (NumArgs expected found)      = "Expected " ++ show expected
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                        ++ ", found " ++ show found
 showError (Parser parseErr)             = "Parse error at " ++ show parseErr
+showError (Default message)				= message
 
 instance Show LispError where show = showError
 

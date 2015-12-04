@@ -5,6 +5,8 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Interpreter hiding (main, readExpr)
 import Parser hiding (main)
+import Error
+import AST
 
 
 main = defaultMain tests
@@ -12,39 +14,45 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Tests" [ simpleNumericUnitTests,
                             typeTestUnitTests,
-                            functionsUnitTests
+                            functionsUnitTests,
+                            listPrimitivesUnitTests
                           ]
 
-evaluatesTo :: String -> String -> Assertion
-expression `evaluatesTo` value = 
+evaluatesTo :: String -> String -> TestTree
+expression `evaluatesTo` value = testCase expression $
   case readExpr expression of
     Left err -> assertString $ "Can not parse:\n" ++ expression ++ "\n" ++ show err
     Right parsed -> case eval parsed of
                     Left err -> assertString $ "Can not evaluate:\n" ++ expression ++ "\n" ++ show err
                     Right evaluated -> show evaluated @?= value
 
+throwsError :: String -> LispError -> TestTree
+expression `throwsError` value = testCase expression $
+  case readExpr expression of
+    Left err -> assertString $ "Can not parse:\n" ++ expression ++ "\n" ++ show err
+    Right parsed -> case eval parsed of
+                    Left err -> err @?= value
+                    Right evaluated -> assertString $ "Expression " ++ expression ++ " was evaluated succesfully to " ++ (show evaluated)
+
 simpleNumericUnitTests = testGroup "simple numeric Unit tests"
-  [ testCase "plus" $
+  [ 
     "(+ 2 2)" `evaluatesTo` "4"
     ,
-    testCase "take first from the list" $
+    -- take first from the list
     "(+ 2 (-4 1))" `evaluatesTo` "2"
     ,
-    testCase "nested expressions" $
+    -- nested expressions
     "(+ 2 (- 4 1))" `evaluatesTo` "5"
     ,
-    testCase "nested expressions + list of arguments" $
+    -- nested expressions + list of arguments
     "(- (+ 4 6 3) 3 5 2)" `evaluatesTo` "3"
   ]
 
 typeTestUnitTests = testGroup "type test Unit tests"
-  [ testCase "(boolean? #t) passes" $
-    "(boolean? #t)" `evaluatesTo` "#t"
+  [ "(boolean? #t)" `evaluatesTo` "#t"
     ,
-    testCase "(boolean? #f) passes" $
     "(boolean? #f)" `evaluatesTo` "#t"
     ,
-    testCase "(boolean? aaa) fails" $
     "(boolean? 'aaa)" `evaluatesTo` "#f"
     ,
     -- pairs vs list, pairs are not nil terminated, lists are
@@ -67,86 +75,107 @@ typeTestUnitTests = testGroup "type test Unit tests"
     --testCase "(pair? aaa) fails" $
     --"(pair? aaa)" `evaluatesTo` "#f"
     --,
-    testCase "(list? '(a b c)) passes" $
     "(list? '(a b c)" `evaluatesTo` "#t"
     ,
-    testCase "(list? '()) passes" $
     "(list? '())" `evaluatesTo` "#t"
     ,
-    testCase "(list? '(a . b)) passes" $
     "(list? '(a . b))" `evaluatesTo` "#t"
     ,
-    testCase "(list? '(a b c)) passes" $
     "(list? '(a b c))" `evaluatesTo` "#t"
     ,
-    testCase "(list? (cons 1 (cons 2 nil))) passes" $
     "(list? (cons 1 (cons 2 nil)))" `evaluatesTo` "#t"
     ,
-    testCase "(list? (+ 1 2)) fails" $
     "(list? (+ 1 2))" `evaluatesTo` "#f"
     ,
-    testCase "(symbol? 'foo) passes" $
     "(symbol? 'foo)" `evaluatesTo` "#t"
     ,
-    testCase "(symbol? (car '(a b))) passes" $
     "(symbol? (car '(a b)))" `evaluatesTo` "#t"
     ,
-    testCase "(symbol? \"bar\") fails" $
     "(symbol? \"bar\")" `evaluatesTo` "#f"
     ,
-    testCase "(symbol? 'nil) passes" $
     "(symbol? 'nil)" `evaluatesTo` "#t"
     ,
-    testCase "(symbol? '()) fails" $
     "(symbol? '())" `evaluatesTo` "#f"
     ,
-    testCase "(symbol? #f) fails" $
     "(symbol? #f)" `evaluatesTo` "#f"
     ,
-    testCase "(char? #\\a) passes" $
     "(char? #\\a)" `evaluatesTo` "#t"
     ,
-    testCase "(char? #\\space) passes" $
     "(char? #\\space)" `evaluatesTo` "#t"
     ,
-    testCase "(char? a) fails" $
     "(char? a)" `evaluatesTo` "#f"
     ,
-    testCase "(string? \"aaa\") passes" $
     "(string? \"aaa\")" `evaluatesTo` "#t"
     ,
-    testCase "(string? a) fails" $
     "(string? a)" `evaluatesTo` "#f"
     ,
-    testCase "(vector? #(0 (2 2 2 2) \"Anna\")) passes" $
     "(vector? #(0 (2 2 2 2) \"Anna\"))" `evaluatesTo` "#t"
     ,
-    testCase "(vector? '(a b)) fails" $
     "(vector? '(a b))" `evaluatesTo` "#f"
   ]
 
 functionsUnitTests = testGroup "functions Unit tests"
-  [ testCase "(eq? 5 (+ 1 3 1))" $
-    "(eq? 5 (+ 1 3 1))" `evaluatesTo` "#t"
+  [ "(eq? 5 (+ 1 3 1))" `evaluatesTo` "#t"
     ,
-    testCase "(eq? 5 (+ 1 3 1 2))" $
     "(eq? 5 (+ 1 3 1 2))" `evaluatesTo` "#f"
     ,
-    testCase "(eq? 5 (+ 1 3 1) (- 6 1))" $
     "(eq? 5 (+ 1 3 1) (- 6 1))" `evaluatesTo` "#t"
     ,
-    testCase "(eq? 5 (+ 1 3 1) (- 6 2))" $
     "(eq? 5 (+ 1 3 1) (- 6 2))" `evaluatesTo` "#f"
     ,
-    testCase "(> 2 3)" $
     "(> 2 3)" `evaluatesTo` "#f"
     ,
-    testCase "(< 2 3)" $
     "(< 2 3)" `evaluatesTo` "#t"
     ,
-    testCase "(if (> 2 3) \"yes\" \"no\")" $
+    "(string=? \"test\"  \"test\")" `evaluatesTo` "#t"
+    ,
+    "(string=? \"test\"  \"different_test\")" `evaluatesTo` "#f"
+    ,
+    "(string<? \"abc\" \"bba\")" `evaluatesTo` "#t"
+    ,
+    "(string<? \"cbc\" \"bba\")" `evaluatesTo` "#f"
+    ,
     "(if (> 2 3) \"yes\" \"no\")" `evaluatesTo` "\"no\""
     ,
-    testCase "(if (> 2 3) \"no\" \"yes\")" $
     "(if (< 2 3) \"yes\" \"no\")" `evaluatesTo` "\"yes\""
+    ,
+    "(eq? 5 (+ 1))" `throwsError` NumArgs 2 [Number 1]
+  ]
+
+listPrimitivesUnitTests = testGroup "list primitives Unit tests"
+  [ "(car '(a b c))" `evaluatesTo` "a"
+    ,
+    "(car '(a))" `evaluatesTo` "a"
+    ,
+    "(car '(a b . c))" `evaluatesTo` "a"
+    ,
+    "(car 'a)" `throwsError` TypeMismatch "pair" (Atom "a")
+    ,
+    "(car 'a 'b)" `throwsError` NumArgs 1 [Atom "a", Atom "b"]
+    ,
+    "(cdr '(a b c))" `evaluatesTo` "(b c)"
+    ,
+    "(cdr '(a b))" `evaluatesTo` "(b)"
+    ,
+    "(cdr '(a))" `evaluatesTo` "()"
+    ,
+    "(cdr '(a . b))" `evaluatesTo` "b"
+    ,
+    "(cdr '(a b . c))" `evaluatesTo` "(b . c)"
+    ,
+    "(cdr 'a)" `throwsError` TypeMismatch "pair" (Atom "a")
+    ,
+    "(cdr 'a 'b)" `throwsError` NumArgs 1 [Atom "a", Atom "b"]
+    ,
+    "(eq? '(b c) (cdr '(a b c)))" `evaluatesTo` "#t"
+    ,
+    "(eq? '(a b) (cdr '(a b c)))" `evaluatesTo` "#f"
+    ,
+    "(eq? '(b c) (cdr '(a b c d)))" `evaluatesTo` "#f"
+    ,
+    "(eqv? '(b c) (cdr '(a b c)))" `evaluatesTo` "#t"
+    ,
+    "(eqv? '(a b) (cdr '(a b c d)))" `evaluatesTo` "#f"
+    ,
+    "(eqv? '(a b) (cdr '(a b c d) 'c)))" `throwsError` NumArgs 1 [List [Atom "a",Atom "b",Atom "c",Atom "d"],Atom "c"]
   ]
