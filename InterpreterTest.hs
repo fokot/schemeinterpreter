@@ -65,7 +65,7 @@ typeTestUnitTests = testGroup "type test Unit tests"
     --"(pair? aaa)" `evaluatesTo` "#f"
     --,
     testCase "(list? '(a b c)) passes" $
-    "(list? '(a b c))" `evaluatesTo` "#t"
+    "(list? '(a b c)" `evaluatesTo` "#t"
     ,
     testCase "(list? '()) passes" $
     "(list? '())" `evaluatesTo` "#t"

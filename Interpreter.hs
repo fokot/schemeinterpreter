@@ -26,22 +26,33 @@ primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
               ("/", numericBinop div),
-              -- FIXME
-              --("eq?", eq),
+              ("eq?", eq),
               ("mod", numericBinop mod),
               ("quotient", numericBinop quot),
-              ("remainder", numericBinop rem)
-              --("boolean?", unaryBoolOp booleanQ),
+              ("remainder", numericBinop rem),
+              ("boolean?", unaryBoolOp booleanQ),
               --("pair?", unaryBoolOp pairQ),
-              -- FIXME
-              --("list?", unaryBoolOp listQ),
-              --("symbol?", unaryBoolOp symbolQ),
-              --("char?", unaryBoolOp charQ),
-              --("string?", unaryBoolOp stringQ),
-              --("vector?", unaryBoolOp vectorQ),
-              --("number?", unaryBoolOp numberQ),
-              --("symbol->string", unaryOp symbol2string),
-              --("string->symbol", unaryOp string2symbol)
+              ("list?", unaryBoolOp listQ),
+              ("symbol?", unaryBoolOp symbolQ),
+              ("char?", unaryBoolOp charQ),
+              ("string?", unaryBoolOp stringQ),
+              ("vector?", unaryBoolOp vectorQ),
+              ("number?", unaryBoolOp numberQ),
+              ("symbol->string", unaryOp symbol2string),
+              ("string->symbol", unaryOp string2symbol),
+              ("=", numBoolBinop (==)),
+              ("<", numBoolBinop (<)),
+              (">", numBoolBinop (>)),
+              ("/=", numBoolBinop (/=)),
+              (">=", numBoolBinop (>=)),
+              ("<=", numBoolBinop (<=)),
+              ("&&", boolBoolBinop (&&)),
+              ("||", boolBoolBinop (||)),
+              ("string=?", strBoolBinop (==)),
+              ("string<?", strBoolBinop (<)),
+              ("string>?", strBoolBinop (>)),
+              ("string<=?", strBoolBinop (<=)),
+              ("string>=?", strBoolBinop (>=))
               ]
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
@@ -53,11 +64,32 @@ unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
 unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 
-unaryOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal
+boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
+boolBinop unpacker op args = if length args /= 2 
+                             then throwError $ NumArgs 2 args
+                             else do left <- unpacker $ args !! 0
+                                     right <- unpacker $ args !! 1
+                                     return $ Bool $ left `op` right
+
+numBoolBinop  = boolBinop unpackNum
+strBoolBinop  = boolBinop unpackStr
+boolBoolBinop = boolBinop unpackBool
+
+unpackStr :: LispVal -> ThrowsError String
+unpackStr (String s) = return s
+unpackStr (Number s) = return $ show s
+unpackStr (Bool s)   = return $ show s
+unpackStr notString  = throwError $ TypeMismatch "string" notString
+
+unpackBool :: LispVal -> ThrowsError Bool
+unpackBool (Bool b) = return b
+unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
+
+unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryOp f = f . head
 
-unaryBoolOp :: (LispVal -> Bool) -> [LispVal] -> LispVal
-unaryBoolOp f = Bool . f . head
+unaryBoolOp :: (LispVal -> Bool) -> [LispVal] -> ThrowsError LispVal
+unaryBoolOp f = return . Bool . f . head
 
 booleanQ, {-pairQ,-} listQ, symbolQ, charQ, stringQ, vectorQ, numberQ :: LispVal -> Bool
 booleanQ (Bool _) = True
@@ -77,18 +109,29 @@ vectorQ _ = False
 numberQ (Number _) = True
 numberQ _ = False
 
-symbol2string, string2symbol :: LispVal -> LispVal
-symbol2string (Atom s)   = String s
-symbol2string _          = String ""
-string2symbol (String s) = Atom s
-string2symbol _          = Atom ""
+symbol2string, string2symbol :: LispVal -> ThrowsError LispVal
+symbol2string (Atom s)   = return $ String s
+symbol2string e          = throwError $ TypeMismatch "symbol" e
+string2symbol (String s) = return $ Atom s
+string2symbol e          = throwError $ TypeMismatch "string" e
 
---eq :: [LispVal] -> ThrowsError LispVal
---eq args@(x:[]) = throwError $ NumArgs 2 args
---eq (x:y:[])    = return Bool $ eval x == eval y
----- FIXME
-----eq (x:tail)    = return Bool $ all (== first) $ map eval tail where first = eval x
---eq []          = throwError $ NumArgs 2 []
+eq :: [LispVal] -> ThrowsError LispVal
+eq []          = throwError $ NumArgs 2 []
+eq args@(x:[]) = throwError $ NumArgs 2 args
+eq (x:y:[])    = (==) <$> (eval x) <*> (eval y) >>= return . Bool
+-- monad style
+--eq (x:y:[])    = do
+--    xx <- eval x
+--    yy <- eval y
+--    return $ Bool $ xx == yy
+
+-- this is not working
+--eq (x:tail)    = return Bool $ all (== first) $ map eval tail where first = eval x
+eq xs          = let evaluated = mapM eval xs
+                 in do (e:es) <- evaluated
+                       return $ Bool $ all (== e) es
+
+
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of

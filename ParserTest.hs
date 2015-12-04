@@ -57,7 +57,7 @@ parseNumerUnitTests = testGroup "parseNumber Unit tests"
     testCase "does not parse bullshit" $
     parseNumber `notParses` "#111"
     ,
-    testCase "does not parse bullshit" $
+    testCase "does not parse this bullshit" $
     parseNumber `notParses` "a"
   ]
 
