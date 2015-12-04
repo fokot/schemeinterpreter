@@ -21,7 +21,8 @@ tests = testGroup "Tests" [ parseNumerUnitTests,
                             parseComplexUnitTests,
                             parseExprListAndDottedListsUnitTests,
                             parseExprQuasiquotesUnitTests,
-                            parseExprVectorUnitTests
+                            parseExprVectorUnitTests,
+                            variousUnitTests
                           ]
 
 fromRight (Right x) = x
@@ -191,4 +192,9 @@ parseExprVectorUnitTests = testGroup "parse vector Unit tests"
     ,
     testCase "quasiquoted and unquoted" $
     parseExpr `parses` "#(foo bar baz)" @?= Vector (array (0,2) [(0, Atom "foo"), (1, Atom "bar"), (2, Atom "baz")])
+  ]
+
+variousUnitTests = testGroup "various Unit tests"
+  [ testCase "empty vector" $
+    parseExpr `parses`  "(char? #\\a)" @?= List [Atom "char?", Character 'a']
   ]

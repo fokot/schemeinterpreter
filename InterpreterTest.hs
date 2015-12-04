@@ -38,9 +38,6 @@ simpleNumericUnitTests = testGroup "simple numeric Unit tests"
   [ 
     "(+ 2 2)" `evaluatesTo` "4"
     ,
-    -- take first from the list
-    "(+ 2 (-4 1))" `evaluatesTo` "2"
-    ,
     -- nested expressions
     "(+ 2 (- 4 1))" `evaluatesTo` "5"
     ,
@@ -75,7 +72,7 @@ typeTestUnitTests = testGroup "type test Unit tests"
     --testCase "(pair? aaa) fails" $
     --"(pair? aaa)" `evaluatesTo` "#f"
     --,
-    "(list? '(a b c)" `evaluatesTo` "#t"
+    "(list? '(a b c))" `evaluatesTo` "#t"
     ,
     "(list? '())" `evaluatesTo` "#t"
     ,
@@ -83,7 +80,7 @@ typeTestUnitTests = testGroup "type test Unit tests"
     ,
     "(list? '(a b c))" `evaluatesTo` "#t"
     ,
-    "(list? (cons 1 (cons 2 nil)))" `evaluatesTo` "#t"
+    "(list? (cons 1 (cons 2 '()))))" `evaluatesTo` "#t"
     ,
     "(list? (+ 1 2))" `evaluatesTo` "#f"
     ,
@@ -103,11 +100,9 @@ typeTestUnitTests = testGroup "type test Unit tests"
     ,
     "(char? #\\space)" `evaluatesTo` "#t"
     ,
-    "(char? a)" `evaluatesTo` "#f"
+    "(char? a)" `throwsError` (BadSpecialForm "Unrecognized special form" $ Atom "a")
     ,
     "(string? \"aaa\")" `evaluatesTo` "#t"
-    ,
-    "(string? a)" `evaluatesTo` "#f"
     ,
     "(vector? #(0 (2 2 2 2) \"Anna\"))" `evaluatesTo` "#t"
     ,
@@ -118,10 +113,6 @@ functionsUnitTests = testGroup "functions Unit tests"
   [ "(eq? 5 (+ 1 3 1))" `evaluatesTo` "#t"
     ,
     "(eq? 5 (+ 1 3 1 2))" `evaluatesTo` "#f"
-    ,
-    "(eq? 5 (+ 1 3 1) (- 6 1))" `evaluatesTo` "#t"
-    ,
-    "(eq? 5 (+ 1 3 1) (- 6 2))" `evaluatesTo` "#f"
     ,
     "(> 2 3)" `evaluatesTo` "#f"
     ,

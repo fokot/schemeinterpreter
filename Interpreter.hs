@@ -13,6 +13,11 @@ eval :: LispVal -> ThrowsError LispVal
 eval val@(String _) = return val
 eval val@(Number _) = return val
 eval val@(Bool _) = return val
+eval val@(Character _) = return val
+eval val@(Float _) = return val
+eval val@(Ratio _) = return val
+eval val@(Complex _ _) = return val
+eval val@(Vector _) = return val
 eval (List [Atom "quote", val]) = return val
 -- as with standard Scheme, our evaluator considers #f to be false and any other value to be true
 eval (List [Atom "if", pred, conseq, alt]) = 
@@ -62,6 +67,7 @@ primitives = [("+", numericBinop (+)),
               ("string>=?", strBoolBinop (>=)),
               ("car", car),
               ("cdr", cdr),
+              ("cons", cons),
               ("eq?", eqv),
               ("eqv?", eqv)
               ]
@@ -109,10 +115,10 @@ booleanQ _ = False
 listQ (List _) = True
 listQ (DottedList _ _) = True
 listQ _ = False
-symbolQ (Atom _) = False
+symbolQ (Atom _) = True
 symbolQ _ = False
 charQ (Character _) = True
-charQ _ = False
+charQ _ = undefined
 stringQ (String _) = True
 stringQ _ = False
 vectorQ (Vector _) = True
@@ -188,5 +194,6 @@ main = do
      evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
      putStrLn $ extractValue $ trapError evaled
 
-repl' args = extractValue $ trapError $ liftM show $ readExpr args >>= eval
+r args = extractValue $ trapError $ liftM show $ readExpr args >>= eval
+p args = extractValue $ trapError $ liftM show $ readExpr args
 
