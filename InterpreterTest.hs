@@ -158,7 +158,13 @@ listPrimitivesUnitTests = testGroup "list primitives Unit tests"
     ,
     "(cdr 'a 'b)" `throwsError` NumArgs 1 [Atom "a", Atom "b"]
     ,
+    "(cons '(this is) 'test)" `evaluatesTo` "((this is) . test)"
+    ,
+    "(cons '(this is) '())" `evaluatesTo` "((this is))"
+    ,
     "(eq? '(b c) (cdr '(a b c)))" `evaluatesTo` "#t"
+    ,
+    "(eq? 3 \"3\")" `evaluatesTo` "#f"
     ,
     "(eq? '(a b) (cdr '(a b c)))" `evaluatesTo` "#f"
     ,
@@ -169,4 +175,18 @@ listPrimitivesUnitTests = testGroup "list primitives Unit tests"
     "(eqv? '(a b) (cdr '(a b c d)))" `evaluatesTo` "#f"
     ,
     "(eqv? '(a b) (cdr '(a b c d) 'c)))" `throwsError` NumArgs 1 [List [Atom "a",Atom "b",Atom "c",Atom "d"],Atom "c"]
+    ,
+    "(eqv? 3 \"3\")" `evaluatesTo` "#f"
+    ,
+    "(equal? 3 \"3\")" `evaluatesTo` "#t"
+    ,
+    "(equal? 3 #\\3)" `evaluatesTo` "#f"
+    ,
+    "(equal? 3 3)" `evaluatesTo` "#t"
+    ,
+    "(equal? 3 \"4\")" `evaluatesTo` "#f"
+    ,
+    "(equal? 3 #\\4)" `evaluatesTo` "#f"
+    ,
+    "(equal? 3 4)" `evaluatesTo` "#f"
   ]
