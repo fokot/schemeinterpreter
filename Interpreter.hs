@@ -28,7 +28,8 @@ eval (List [Atom "if", pred, conseq, alt]) =
         case result of
              Bool False -> eval alt
              otherwise  -> eval conseq
-eval (List ((Atom "cond") : alts)) = cond alts             
+eval (List ((Atom "cond") : alts)) = evalCond alts
+eval (List ((Atom "case") : value : alts)) = eval value >>= \x -> evalCase x alts
 eval (List (Atom func : args)) = mapM eval args >>= apply func
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
@@ -209,26 +210,25 @@ equal [arg1, arg2] = do
       return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
-cond :: [LispVal] -> ThrowsError LispVal
-cond ((List (Atom "else" : value : [])) : []) = eval value
-cond ((List (condition : value : [])) : alts) = do
-    result <- eval condition
+evalCond :: [LispVal] -> ThrowsError LispVal
+evalCond ((List (Atom "else" : value : [])) : []) = eval value
+evalCond ((List (evalCondition : value : [])) : alts) = do
+    result <- eval evalCondition
     boolResult :: Bool <- unpackBool result
     if boolResult then eval value
-                  else cond alts
-cond ((List a) : _) = throwError $ NumArgs 2 a
-cond (a : _) = throwError $ NumArgs 2 [a]
-cond _ = throwError $ Default "Not viable alternative in cond"
+                  else evalCond alts
+evalCond ((List a) : _) = throwError $ NumArgs 2 a
+evalCond (a : _) = throwError $ NumArgs 2 [a]
+evalCond _ = throwError $ Default "Not viable alternative in cond"
 
-
-
-
-
---eval (List [Atom "if", pred, conseq, alt]) = 
---     do result <- eval pred
---        case result of
---             Bool False -> eval alt
---             otherwise  -> eval conseq
+evalCase :: LispVal -> [LispVal] -> ThrowsError LispVal
+evalCase _ [(List [Atom "else", value])] = eval value
+evalCase v (List [List options,  value] : alts) = do
+    if v `elem` options then eval value
+                          else evalCase v alts
+evalCase _ ((List a) : _) = throwError $ NumArgs 2 a
+evalCase _ (a : _) = throwError $ NumArgs 2 [a]
+evalCase _ _ = throwError $ Default "Not viable alternative in case"
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of

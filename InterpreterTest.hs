@@ -16,7 +16,8 @@ tests = testGroup "Tests" [ simpleNumericUnitTests,
                             typeTestUnitTests,
                             functionsUnitTests,
                             listPrimitivesUnitTests,
-                            condUnitTests
+                            condUnitTests,
+                            caseUnitTests
                           ]
 
 evaluatesTo :: String -> String -> TestTree
@@ -206,4 +207,35 @@ condUnitTests = testGroup "cond Unit tests"
     "(cond ((> 3 3) 'greater)\
          \ ((< 3 3) 'less)\
          \ (else 'equal))"   `evaluatesTo` "equal"
+         ,
+    "(cond ((> 3 3) 'greater)\
+         \ ((< 3 3) 'less))"   `throwsError` Default "Not viable alternative in cond"
   ]
+
+caseUnitTests = testGroup "case Unit tests"
+  [ "(case (* 2 3)\
+       \ ((2 3 5 7) 'prime)\
+       \ ((1 4 6 8 9) 'composite))" `evaluatesTo` "composite"
+    ,
+    "(case 5\
+       \ ((2 3 5 7) 'prime)\
+       \ ((1 4 6 8 9) 'composite))" `evaluatesTo` "prime"
+    ,
+    "(case (car '(c d))\
+       \ ((a) 'a)\
+       \ ((b) 'b))"                  `throwsError` Default "Not viable alternative in case"
+    ,
+    "(case (car '(c d))\
+       \ ((a c) 'a)\
+       \ ((b) 'b))"                  `evaluatesTo` "a"
+    ,
+    "(case (car '(c d))\
+       \ ((a) 'a)\
+       \ ((b c) 'b))"                  `evaluatesTo` "b"
+    ,
+    "(case (car '(c d))\
+       \ ((a e i o u) 'vowel)\
+       \ ((w y) 'semivowel)\
+       \ (else 'consonant))"        `evaluatesTo` "consonant"
+  ]
+
