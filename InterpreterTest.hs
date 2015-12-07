@@ -15,7 +15,8 @@ tests :: TestTree
 tests = testGroup "Tests" [ simpleNumericUnitTests,
                             typeTestUnitTests,
                             functionsUnitTests,
-                            listPrimitivesUnitTests
+                            listPrimitivesUnitTests,
+                            condUnitTests
                           ]
 
 evaluatesTo :: String -> String -> TestTree
@@ -130,6 +131,8 @@ functionsUnitTests = testGroup "functions Unit tests"
     ,
     "(if (< 2 3) \"yes\" \"no\")" `evaluatesTo` "\"yes\""
     ,
+    "(if \"s\" \"yes\" \"no\")" `evaluatesTo` "\"yes\""
+    ,
     "(eq? 5 (+ 1))" `throwsError` NumArgs 2 [Number 1]
   ]
 
@@ -189,4 +192,18 @@ listPrimitivesUnitTests = testGroup "list primitives Unit tests"
     "(equal? 3 #\\4)" `evaluatesTo` "#f"
     ,
     "(equal? 3 4)" `evaluatesTo` "#f"
+    ,
+    "(equal? '(1 \"2\") '(1 2))" `evaluatesTo` "#t"
+  ]
+
+condUnitTests = testGroup "cond Unit tests"
+  [ "(cond ((> 3 2) 'greater)\
+         \ ((< 3 2) 'less))"   `evaluatesTo` "greater"
+    ,
+    "(cond ((> 3 4) 'greater)\
+         \ ((< 3 4) 'less))"   `evaluatesTo` "less"
+    ,
+    "(cond ((> 3 3) 'greater)\
+         \ ((< 3 3) 'less)\
+         \ (else 'equal))"   `evaluatesTo` "equal"
   ]

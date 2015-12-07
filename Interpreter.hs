@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Interpreter
 where
@@ -27,6 +28,7 @@ eval (List [Atom "if", pred, conseq, alt]) =
         case result of
              Bool False -> eval alt
              otherwise  -> eval conseq
+eval (List ((Atom "cond") : alts)) = cond alts             
 eval (List (Atom func : args)) = mapM eval args >>= apply func
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
@@ -195,6 +197,11 @@ unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
         `catchError` (const $ return False)
 
 equal :: [LispVal] -> ThrowsError LispVal
+equal [(List arg1), (List arg2)] = do
+    a1 :: [LispVal] <- mapM eval arg1
+    a2 :: [LispVal] <- mapM eval arg1
+    zipped :: [LispVal] <- sequence $ zipWith (\x y -> equal [x, y]) a1 a2 :: ThrowsError [LispVal]
+    return . Bool $ all (== Bool True) zipped
 equal [arg1, arg2] = do
       primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2) 
                          [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
@@ -202,18 +209,37 @@ equal [arg1, arg2] = do
       return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
+cond :: [LispVal] -> ThrowsError LispVal
+cond ((List (Atom "else" : value : [])) : []) = eval value
+cond ((List (condition : value : [])) : alts) = do
+    result <- eval condition
+    boolResult :: Bool <- unpackBool result
+    if boolResult then eval value
+                  else cond alts
+cond ((List a) : _) = throwError $ NumArgs 2 a
+cond (a : _) = throwError $ NumArgs 2 [a]
+cond _ = throwError $ Default "Not viable alternative in cond"
 
+
+
+
+
+--eval (List [Atom "if", pred, conseq, alt]) = 
+--     do result <- eval pred
+--        case result of
+--             Bool False -> eval alt
+--             otherwise  -> eval conseq
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of
-     Left err -> throwError $ Parser err
-     Right val -> return val
+    Left err -> throwError $ Parser err
+    Right val -> return val
 
 main :: IO ()
 main = do
-     args <- getArgs
-     evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
-     putStrLn $ extractValue $ trapError evaled
+    args <- getArgs
+    evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
+    putStrLn $ extractValue $ trapError evaled
 
 r args = extractValue $ trapError $ liftM show $ readExpr args >>= eval
 p args = extractValue $ trapError $ liftM show $ readExpr args
