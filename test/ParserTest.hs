@@ -3,18 +3,18 @@ where
 
 import Test.Tasty
 import Test.Tasty.HUnit
-import Parser hiding (main)
-import AST
+import SchemeInterpreter.Parser hiding (main)
+import SchemeInterpreter.AST
 import Text.ParserCombinators.Parsec (parse)
 import Text.Parsec.Prim
 import Data.Functor.Identity
 import Data.Ratio
 import Data.Array
 
-main = defaultMain tests
+main2 = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [ parseNumerUnitTests,
+tests = testGroup "Parser Tests" [ parseNumerUnitTests,
                             parseCharacterUnitTests,
                             parseFloatUnitTests,
                             parseRatioUnitTests,

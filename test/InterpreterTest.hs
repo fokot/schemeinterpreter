@@ -1,18 +1,18 @@
-module ParserTest
+module InterpreterTest
 where
 
 import Test.Tasty
 import Test.Tasty.HUnit
-import Interpreter hiding (main, readExpr)
-import Parser hiding (main)
-import Error
-import AST
+import SchemeInterpreter.Interpreter hiding (main, readExpr)
+import SchemeInterpreter.Parser hiding (main)
+import SchemeInterpreter.Error
+import SchemeInterpreter.AST
 
 
-main = defaultMain tests
+main1 = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [ simpleNumericUnitTests,
+tests = testGroup "Interpreter Tests" [ simpleNumericUnitTests,
                             typeTestUnitTests,
                             functionsUnitTests,
                             listPrimitivesUnitTests,

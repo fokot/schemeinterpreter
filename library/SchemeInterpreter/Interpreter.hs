@@ -1,12 +1,12 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Interpreter
+module SchemeInterpreter.Interpreter
 where
 
-import AST
-import Error
-import Parser hiding (readExpr, main)
+import SchemeInterpreter.AST
+import SchemeInterpreter.Error
+import SchemeInterpreter.Parser hiding (readExpr, main)
 import System.Environment
 import Text.ParserCombinators.Parsec
 import Control.Monad.Error

@@ -5,3 +5,14 @@
 I added test-cases, implemented reader's excercises and polished code a little bit
 
 Compatibility can be tested with [online Scheme interpreter](https://repl.it/languages/Scheme)
+
+### [Stack](http://haskellstack.org) - the build system
+#### Creating project
+* cabal init - creates initial cabal config file
+* stack init - creates new stack project, stack.yaml etc.
+
+#### Selfexplanatory
+* stack build
+* stack exec schemeinterpreter
+* stack test
+* stack repl 

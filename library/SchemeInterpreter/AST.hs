@@ -1,4 +1,4 @@
-module AST
+module SchemeInterpreter.AST
 where
 
 import Data.Array

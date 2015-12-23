@@ -1,7 +1,7 @@
-module Parser
+module SchemeInterpreter.Parser
 where
 
-import AST
+import SchemeInterpreter.AST
 import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad

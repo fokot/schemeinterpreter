@@ -1,8 +1,8 @@
-module Error
+module SchemeInterpreter.Error
 where
 
 import Control.Monad.Error
-import AST
+import SchemeInterpreter.AST
 import Text.ParserCombinators.Parsec (ParseError)
 
 
