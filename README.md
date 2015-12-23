@@ -7,7 +7,7 @@ I added test-cases, implemented reader's excercises and polished code a little b
 Compatibility can be tested with [online Scheme interpreter](https://repl.it/languages/Scheme)
 
 ### [Stack](http://haskellstack.org) - the build system
-#### Creating project
+#### Project was created by
 * cabal init - creates initial cabal config file
 * stack init - creates new stack project, stack.yaml etc.
 
