@@ -2,6 +2,9 @@
 
 # Scheme interpreter from [tutorial](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours)
 
+[![Build Status](https://travis-ci.org/fokot/schemeinterpreter.svg?branch=master)](https://travis-ci.org/fokot/schemeinterpreter)
+
+
 I added test-cases, implemented reader's excercises and polished code a little bit
 
 Compatibility can be tested with [online Scheme interpreter](https://repl.it/languages/Scheme)
