@@ -11,11 +11,11 @@ Compatibility can be tested with [online Scheme interpreter](https://repl.it/lan
 
 ### [Stack](http://haskellstack.org) - the build system
 #### Project was created by
-* cabal init - creates initial cabal config file
-* stack init - creates new stack project, stack.yaml etc.
+* `cabal init` - creates initial cabal config file
+* `stack init` - creates new stack project, stack.yaml etc.
 
 #### Selfexplanatory
-* stack build
-* stack exec schemeinterpreter
-* stack test
-* stack repl 
+* `stack build`
+* `stack exec schemeinterpreter` - this runs scheme repl -:)
+* `stack test`
+* `stack repl` 

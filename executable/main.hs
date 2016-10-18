@@ -1,7 +1,5 @@
-{-# LANGUAGE ExistentialQuantification #-}
-
 module Main where
 
-import qualified SchemeInterpreter.Interpreter as SI 
+import qualified SchemeInterpreter.Repl as Repl
 
-main = SI.main
+main = Repl.main
