@@ -16,6 +16,6 @@ Compatibility can be tested with [online Scheme interpreter](https://repl.it/lan
 
 #### Selfexplanatory
 * `stack build`
-* `stack exec schemeinterpreter` - this runs scheme repl -:)
+* `stack exec schemeinterpreter` - this runs scheme repl :-)
 * `stack test`
 * `stack repl` 
