@@ -9,10 +9,10 @@ language: c
 
 # Caching so the next build will be fast too.
 #cache:
-#  directories:
-#  - $HOME/.ghc
-#  - $HOME/.cabal
-#  - $HOME/.stack
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
 
 # The different configurations we want to test. We have BUILD=cabal which uses
 # cabal-install, and BUILD=stack which uses Stack. More documentation on each
@@ -31,7 +31,7 @@ matrix:
   # variable, such as using --stack-yaml to point to a different file.
   - env: BUILD=stack ARGS=""
     compiler: ": #stack default"
-    addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
+    addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
 
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
