@@ -18,4 +18,4 @@ Compatibility can be tested with [online Scheme interpreter](https://repl.it/lan
 * `stack build`
 * `stack exec schemeinterpreter` - this runs scheme repl :-)
 * `stack test`
-* `stack repl` 
+* `stack repl` - opens haskell repl
