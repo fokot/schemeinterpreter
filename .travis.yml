@@ -8,7 +8,7 @@ sudo: false
 language: c
 
 # Caching so the next build will be fast too.
-#cache:
+cache:
   directories:
   - $HOME/.ghc
   - $HOME/.cabal
